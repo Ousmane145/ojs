@@ -1,0 +1,38 @@
+.santane_analysis_section {
+    margin: 20px 0;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: #f9f9f9;
+}
+
+.santane_analysis_results {
+    margin-top: 15px;
+}
+
+.santane_analysis_report {
+    padding: 15px;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.santane_analysis_report h4 {
+    margin-top: 0;
+    color: #333;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 8px;
+}
+
+.santane_analysis_report h5 {
+    margin-bottom: 10px;
+    color: #555;
+}
+
+.santane_analysis_report ul {
+    margin-bottom: 15px;
+}
+
+.santane_analysis_report li {
+    margin-bottom: 5px;
+}
