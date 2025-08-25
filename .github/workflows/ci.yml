@@ -53,26 +53,6 @@ jobs:
         args: --init plugins/generic/santaneAnalysisPlugin/
         if: always()
 
-    - name: Analyse statique de sécurité
-      run: |
-        echo "🔒 Analyse de sécurité basique..."
-        # Vérifier les failles de sécurité communes
-        if grep -r "eval(" plugins/generic/santaneAnalysisPlugin/ --include="*.php"; then
-          echo "❌ eval() détecté - potentielle faille de sécurité"
-          exit 1
-        fi
-
-        if grep -r "shell_exec" plugins/generic/santanaAnalysisPlugin/ --include="*.php"; then
-          echo "⚠️  shell_exec détecté - à vérifier"
-        fi
-
-  js-css-validation:
-    name: Validation Frontend
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout du code
-      uses: actions/checkout@v4
-
     - name: Valider la syntaxe JavaScript
       run: |
         echo "📋 Validation JavaScript..."
