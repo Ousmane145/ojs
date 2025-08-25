@@ -10,4 +10,4 @@
  */
 
 require_once('SantaneAnalysisPlugin.inc.php');
-return new SantaneAnalysisPlugin();
+return new santaneAnalysisPlugin();

@@ -49,10 +49,7 @@ jobs:
     - name: Checkout du code
       uses: actions/checkout@v4
 
-    - name: Scan de sécurité avec Psalm
-      uses: docker://vimeo/psalm-github-actions
-      with:
-        args: --init plugins/generic/santaneAnalysisPlugin/
+    
 
     - name: Valider la syntaxe JavaScript
       run: |

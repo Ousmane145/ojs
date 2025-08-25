@@ -16,7 +16,7 @@ use PKP\Application;
 use PKP\plugins\HookRegistry;
 use PKP\plugins\GenericPlugin;
 
-class SantaneAnalysisPlugin extends GenericPlugin
+class santaneAnalysisPlugin extends GenericPlugin
 {
     /**
      * @copydoc Plugin::register()
