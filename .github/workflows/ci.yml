@@ -9,7 +9,7 @@ on:
 jobs:
   php-lint:
     name: PHP Lint avec CodeSniffer
-    runs-on: ubuntu-latest
+    runs-on: ubuntu 22.04
     
     strategy:
       matrix:
