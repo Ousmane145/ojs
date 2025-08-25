@@ -49,8 +49,6 @@ jobs:
     - name: Checkout du code
       uses: actions/checkout@v4
 
-    
-
     - name: Valider la syntaxe JavaScript
       run: |
         echo "📋 Validation JavaScript..."
