@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @file index.php
  *
@@ -7,6 +8,6 @@
  *
  * @brief Wrapper for Santane Analysis plugin.
  */
+
 require_once('SantaneAnalysisPlugin.inc.php');
 return new SantaneAnalysisPlugin();
-?>
