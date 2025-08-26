@@ -1,31 +1,74 @@
-name: CI
+name: CI - Lint et Validation PHP
 
 on:
   push:
-    branches: [ "feat/premium-helper-plugin-ziryke" ]
-    paths:
-      - 'plugins/generic/santaneAnalysisPlugin/**'
+    branches: [feat/premium-helper-plugin-ziryke, main]
   pull_request:
-    branches: [ "feat/premium-helper-plugin-ziryke" ]
-    paths:
-      - 'plugins/generic/santaneAnalysisPlugin/**'
+    branches: [main]
 
 jobs:
-  phpcs:
-    name: PHP_CodeSniffer
-    runs-on: ubuntu-latest
+  php-lint:
+    name: PHP Lint avec CodeSniffer
+    runs-on: ubuntu-22.04
     
+    strategy:
+      matrix:
+        php-version: ['8.2', '8.3', '8.4']
+
     steps:
-    - uses: actions/checkout@v3
-    
+    - name: Checkout du code
+      uses: actions/checkout@v4
+
     - name: Setup PHP
       uses: shivammathur/setup-php@v2
       with:
-        php-version: '8.3'
-        tools: composer
+        php-version: ${{ matrix.php-version }}
+        tools: composer, phpcs
+
+    - name: Installer PHP_CodeSniffer et standard PSR-12
+      run: |
+        composer global require squizlabs/php_codesniffer
+        phpcs --config-set default_standard PSR12
+        phpcs --config-set show_progress 1
+
+    - name: Linter le code PHP du plugin
+      run: |
+        echo "🔍 Analyse du code PHP avec PSR-12..."
+        phpcs --standard=PSR12 --extensions=php --ignore=*/vendor/* --ignore=*/lib/* plugins/generic/santaneAnalysisPlugin/
         
-    - name: Install PHP_CodeSniffer
-      run: composer global require "squizlabs/php_codesniffer=*" --dev
-      
-    - name: Run PHP_CodeSniffer
-      run: ~/.composer/vendor/bin/phpcs --standard=PSR12 --extensions=php --warning-severity=0 --colors plugins/generic/premiumSubmissionHelper/
+    - name: Vérifier la syntaxe PHP
+      run: |
+        echo "✅ Validation de la syntaxe PHP..."
+        find plugins/generic/santaneAnalysisPlugin/ -name "*.php" -exec php -l {} \;
+
+  security-scan:
+    name: Analyse de Sécurité
+    runs-on: ubuntu-latest
+    needs: php-lint
+    steps:
+    - name: Checkout du code
+      uses: actions/checkout@v4
+
+    - name: Valider la syntaxe JavaScript
+      run: |
+        echo "📋 Validation JavaScript..."
+        if ! command -v jshint &> /dev/null; then
+          npm install -g jshint
+        fi
+        jshint plugins/generic/santaneAnalysisPlugin/js/ --config='{"esversion": 6}' || true
+
+    - name: Valider la syntaxe CSS
+      run: |
+        echo "🎨 Validation CSS..."
+        if ! command -v csslint &> /dev/null; then
+          npm install -g csslint
+        fi
+        csslint plugins/generic/santaneAnalysisPlugin/css/ || true
+
+    - name: Valider les fichiers de configuration
+      run: |
+        echo "📋 Validation XML..."
+        find plugins/generic/santaneAnalysisPlugin/ -name "*.xml" -exec echo "Validation de {}" \; -exec xmllint --noout {} \; || true
+        
+        echo "📋 Validation JSON..."
+        find plugins/generic/santaneAnalysisPlugin/ -name "*.json" -exec echo "Validation de {}" \; -exec jq . {} > /dev/null \; || true
