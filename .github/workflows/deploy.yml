@@ -1,59 +1,29 @@
-name: 🚀 Déploiement sur Serveur OJS
+# .github/workflows/deploy.yml
+name: Deploy to Production
 
 on:
-  workflow_run:
-    workflows: ["CI - Lint et Validation PHP"]
-    types: [completed]
-    branches: [main]
+  workflow_dispatch:  # Permet de déclencher manuellement
 
 jobs:
   deploy:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    name: Deploy
     runs-on: ubuntu-latest
-    environment: production
-
+    
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Setup SSH without passphrase prompt
-      uses: webfactory/ssh-agent@v0.8.0
+    - uses: actions/checkout@v3
+    
+    - name: Install SSH key
+      uses: webfactory/ssh-agent@v0.7.0
       with:
         ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-
-    - name: Add server to known hosts
+        
+    - name: Add known hosts
       run: |
         mkdir -p ~/.ssh
         ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
-
-    - name: Test SSH connection
+        
+    - name: Deploy to server
       run: |
-        echo "Testing SSH connection..."
-        ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} "echo 'SSH connection successful!'"
-
-    - name: Create plugin archive
-      run: |
-        echo "Creating deployment archive..."
-        tar -czf santane-plugin.tar.gz -C plugins/generic/santaneAnalysisPlugin/ .
-
-    - name: Deploy to OJS server
-      run: |
-        echo "Deploying plugin..."
-        scp santane-plugin.tar.gz ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:/tmp/
-        ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} "
-          cd /tmp &&
-          tar -xzf santane-plugin.tar.gz -C ${{ secrets.DEPLOY_PATH }}/plugins/generic/santaneAnalysisPlugin/ &&
-          chmod -R 755 ${{ secrets.DEPLOY_PATH }}/plugins/generic/santaneAnalysisPlugin/ &&
-          rm santane-plugin.tar.gz
-        "
-
-    - name: Verify deployment
-      run: |
-        echo "Verifying deployment..."
-        ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} "
-          ls -la ${{ secrets.DEPLOY_PATH }}/plugins/generic/santaneAnalysisPlugin//
-          echo 'Deployment verified successfully!'
-        "
-
-    - name: Notify success
-      run: echo "✅ Déploiement réussi!"
+        rsync -avz --delete --exclude='.git/' \
+          ./plugins/generic/premiumSubmissionHelper/ \
+          ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:/var/www/html/ojs/plugins/generic/premiumSubmissionHelper/
