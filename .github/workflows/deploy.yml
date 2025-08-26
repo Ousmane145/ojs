@@ -18,7 +18,7 @@ on:
         type: choice
         options:
         - '3.5'
-        - '3.4
+        - '3.4'
 
 jobs:
   deploy:
@@ -38,14 +38,19 @@ jobs:
         ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
     - name: Ajouter le serveur à known_hosts
+      env:
+        SERVER_IP: ${{ secrets.SERVER_IP }}
       run: |
         mkdir -p ~/.ssh
-        ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
+        ssh-keyscan -H $SERVER_IP >> ~/.ssh/known_hosts
 
     - name: Valider la connexion SSH
+      env:
+        SERVER_IP: ${{ secrets.SERVER_IP }}
+        SERVER_USER: ${{ secrets.SERVER_USER }}
       run: |
         echo "🔗 Test de connexion au serveur..."
-        ssh -o BatchMode=yes ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} "echo 'Connexion SSH réussie!'"
+        ssh -o BatchMode=yes $SERVER_USER@$SERVER_IP "echo 'Connexion SSH réussie!'"
 
     - name: Créer une archive du plugin
       run: |
@@ -55,50 +60,45 @@ jobs:
         ls -la santane-analysis-plugin.tar.gz
 
     - name: Déployer sur le serveur OJS
+      env:
+        SERVER_IP: ${{ secrets.SERVER_IP }}
+        SERVER_USER: ${{ secrets.SERVER_USER }}
       run: |
         echo "🚀 Déploiement en cours..."
         
         # Copier l'archive
         scp plugins/generic/santaneAnalysisPlugin/santane-analysis-plugin.tar.gz \
-          ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:/tmp/
+          $SERVER_USER@$SERVER_IP:/tmp/
         
         # Commande de déploiement distant
-        ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
+        ssh $SERVER_USER@$SERVER_IP << 'EOF'
           set -e
           echo "📁 Déploiement sur le serveur..."
           
-          # Variables
-          OJS_DIR="/var/www/html/ojs"  
+          OJS_DIR="/var/www/html/ojs"
           PLUGIN_DIR="$OJS_DIR/plugins/generic/santaneAnalysisPlugin"
           BACKUP_DIR="/tmp/plugin-backups"
           TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-          
-          # Créer le dossier de backup
+
           mkdir -p $BACKUP_DIR
-          
-          # Sauvegarder l'ancienne version si elle existe
+
           if [ -d "$PLUGIN_DIR" ]; then
             echo "💾 Sauvegarde de l'ancienne version..."
             tar -czf "$BACKUP_DIR/santane-analysis-backup-$TIMESTAMP.tar.gz" -C $PLUGIN_DIR .
           fi
-          
-          # Préparer le dossier de destination
+
           sudo mkdir -p $PLUGIN_DIR
           sudo chown $USER:www-data $PLUGIN_DIR
           sudo chmod 755 $PLUGIN_DIR
-          
-          # Extraire la nouvelle version
+
           echo "📂 Extraction de la nouvelle version..."
           tar -xzf /tmp/santane-analysis-plugin.tar.gz -C $PLUGIN_DIR
-          
-          # Définir les permissions
+
           sudo chown -R $USER:www-data $PLUGIN_DIR
           sudo find $PLUGIN_DIR -type d -exec chmod 755 {} \;
           sudo find $PLUGIN_DIR -type f -exec chmod 644 {} \;
-          
-          # Nettoyer
+
           rm /tmp/santane-analysis-plugin.tar.gz
-          
           echo "✅ Déploiement terminé avec succès!"
           echo "📋 Résumé:"
           echo "   - Backup: $BACKUP_DIR/santane-analysis-backup-$TIMESTAMP.tar.gz"
@@ -107,10 +107,13 @@ jobs:
         EOF
 
     - name: Vérifier le déploiement
+      env:
+        SERVER_IP: ${{ secrets.SERVER_IP }}
+        SERVER_USER: ${{ secrets.SERVER_USER }}
       run: |
         echo "🔍 Vérification du déploiement..."
-        ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} "
-          PLUGIN_DIR=\"/var/www/ojs/plugins/generic/santaneAnalysisPlugin\"
+        ssh $SERVER_USER@$SERVER_IP "
+          PLUGIN_DIR=\"/var/www/html/ojs/plugins/generic/santaneAnalysisPlugin\"
           if [ -d \"\$PLUGIN_DIR\" ]; then
             echo '✅ Plugin déployé avec succès'
             echo '📁 Structure:'
@@ -127,7 +130,7 @@ jobs:
       if: success()
       run: |
         echo "🎉 Déploiement réussi vers ${{ github.event.inputs.environment }}!"
-        echo "Version: ${{ github.event.inputs.version || 'latest' }}"
+        echo "Version: ${{ github.event.inputs['ojs-version'] || 'latest' }}"
 
     - name: Notifier l'échec
       if: failure()
