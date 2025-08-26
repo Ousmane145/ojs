@@ -22,22 +22,22 @@ jobs:
         mkdir -p ~/.ssh
         ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
         
-    - name: Deploy via tar archive
+    - name: 🚀 Deploy Plugin
       run: |
- 
-        tar -czf premium-plugin.tar.gz -C plugins/generic/premiumSubmissionHelper/ .
 
-
+        echo "Deploying plugin files..."
+  
         scp -o StrictHostKeyChecking=no \
-        premium-plugin.tar.gz \
-        ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:/tmp/
-
-        ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} "
-        sudo rm -rf /var/www/html/ojs/plugins/generic/premiumSubmissionHelper/
-        sudo mkdir -p /var/www/html/ojs/plugins/generic/premiumSubmissionHelper/
-        sudo tar -xzf /tmp/premium-plugin.tar.gz -C /var/www/html/ojs/plugins/generic/premiumSubmissionHelper/
-        sudo chown -R www-data:www-data /var/www/html/ojs/plugins/generic/premiumSubmissionHelper/
-        sudo chmod -R 755 /var/www/html/ojs/plugins/generic/premiumSubmissionHelper/
-        sudo rm /tmp/premium-plugin.tar.gz
-        echo '✅ Plugin deployed via archive!'
-    "
+        ./plugins/generic/premiumSubmissionHelper/*.inc.php \
+        ./plugins/generic/premiumSubmissionHelper/*.php \
+        ./plugins/generic/premiumSubmissionHelper/*.xml \
+        ./plugins/generic/premiumSubmissionHelper/*.txt \
+        ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/var/www/html/ojs/plugins/generic/premiumSubmissionHelper/
+    
+    
+        scp -r -o StrictHostKeyChecking=no \
+        ./plugins/generic/premiumSubmissionHelper/js/ \
+        ./plugins/generic/premiumSubmissionHelper/css/ \
+        ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/var/www/html/ojs/plugins/generic/premiumSubmissionHelper/
+    
+        echo "✅ All files deployed successfully!"
