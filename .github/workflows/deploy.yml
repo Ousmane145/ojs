@@ -12,31 +12,30 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      - name: 📁 Verify and deploy
-        run: |
-          echo "🔍 Checking repository structure..."
-      
-          if [ -d "plugins/generic/premiumSubmissionHelper" ]; then
-              echo "✅ Plugin found in standard location"
-              tar -czf plugin.tar.gz -C plugins/generic/premiumSubmissionHelper/ .
-          elif [ -d "premiumSubmissionHelper" ]; then
-               echo "⚠️ Plugin found in root, moving to standard location"
-               mkdir -p plugins/generic/
-               cp -r premiumSubmissionHelper plugins/generic/
-               tar -czf plugin.tar.gz -C plugins/generic/premiumSubmissionHelper/ .
-          else
-              echo "❌ Plugin not found anywhere!"
-              echo "Available directories:"
-              find . -type d -name "*premium*" -o -name "*helper*" -o -name "*plugin*"
-              exit 1
-          fi
+      - name: 🚀 Deploy from correct path
+      run: |
+        echo "🔍 Checking where the plugin is located..."
+    
+        # Essayez différents chemins possibles
+        if [ -d "premiumSubmissionHelper" ]; then
+            echo "✅ Plugin found in root directory"
+            tar -czf plugin.tar.gz -C premiumSubmissionHelper/ .
+        elif [ -d "src/premiumSubmissionHelper" ]; then
+            echo "✅ Plugin found in src directory"
+            tar -czf plugin.tar.gz -C src/premiumSubmissionHelper/ .
+        else
+            echo "❌ Plugin not found! Available directories:"
+            ls -la
+            find . -type d -name "*" | head -10
+            exit 1
+        fi
 
-          scp -o StrictHostKeyChecking=no \
+        scp -o StrictHostKeyChecking=no \
              plugin.tar.gz \
              ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:/tmp/
-          ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} "
+        ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} "
              sudo tar -xzf /tmp/plugin.tar.gz -C /var/www/html/ojs/plugins/generic/premiumSubmissionHelper/
              sudo chown -R www-data:www-data /var/www/html/ojs/plugins/generic/premiumSubmissionHelper/
-           sudo rm /tmp/plugin.tar.gz
-           echo '✅ Plugin deployed!'
+             sudo rm /tmp/plugin.tar.gz
+             echo '✅ Plugin deployed!'
         "
