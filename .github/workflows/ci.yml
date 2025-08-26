@@ -41,7 +41,13 @@ jobs:
         echo "✅ Validation de la syntaxe PHP..."
         find plugins/generic/santaneAnalysisPlugin/ -name "*.php" -exec php -l {} \;
 
-  
+  security-scan:
+    name: Analyse de Sécurité
+    runs-on: ubuntu-latest
+    needs: php-lint
+    steps:
+    - name: Checkout du code
+      uses: actions/checkout@v4
 
     - name: Valider la syntaxe JavaScript
       run: |
