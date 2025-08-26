@@ -1,10 +1,10 @@
 <?xml version="1.0"?>
 <ruleset name="SantaneAnalysisPlugin">
-    <description>PSR12 check for Santane Analysis Plugin</description>
+    <description>PSR12 check for premium Submission Helper</description>
     <rule ref="PSR12"/>
     
     <!-- Check these files -->
-    <file>plugins/generic/santaneAnalysisPlugin</file>
+    <file>plugins/generic/premiumSubmissionHelperPlugin</file>
     
     <!-- Ignore these paths -->
     <exclude-pattern>*/vendor/*</exclude-pattern>
