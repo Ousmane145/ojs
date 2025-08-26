@@ -1,171 +1,29 @@
+# .github/workflows/deploy.yml
 name: Deploy to Production
 
-# Déclenchement manuel uniquement
 on:
-  workflow_dispatch:
-    inputs:
-      environment:
-        description: 'Deployment environment'
-        required: true
-        default: 'production'
-        type: choice
-        options:
-        - production
-        - staging
+  workflow_dispatch:  # Permet de déclencher manuellement
 
 jobs:
   deploy:
-    name: Deploy Plugin to OJS Server
+    name: Deploy
     runs-on: ubuntu-latest
-    environment: ${{ github.event.inputs.environment }}
     
     steps:
-    # Étape 1: Récupérer le code
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    # Étape 2: Préparer les fichiers pour déploiement
-    - name: Prepare deployment files
+    - uses: actions/checkout@v3
+    
+    - name: Install SSH key
+      uses: webfactory/ssh-agent@v0.7.0
+      with:
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+        
+    - name: Add known hosts
       run: |
-        echo "📦 Preparing plugin files for deployment..."
-        
-        # Créer le dossier de destination
-        mkdir -p deployment/premiumSubmissionHelper
-        
-        # Vérifier que le plugin existe
-        if [ ! -d "plugins/generic/premiumSubmissionHelper" ]; then
-          echo "❌ Plugin directory not found!"
-          exit 1
-        fi
-        
-        # Copier SEULEMENT les fichiers du plugin
-        cp -r plugins/generic/premiumSubmissionHelper/* deployment/premiumSubmissionHelper/
-        
-        # Vérifier le contenu
-        echo "📂 Plugin files to deploy:"
-        ls -la deployment/premiumSubmissionHelper/
-        echo ""
-        echo "📊 Total files: $(find deployment/premiumSubmissionHelper -type f | wc -l)"
-        
-    # Étape 3: Créer une archive
-    - name: Create deployment archive
-      run: |
-        cd deployment
-        tar -czf premiumSubmissionHelper.tar.gz premiumSubmissionHelper/
-        echo "✅ Archive created: $(ls -lh premiumSubmissionHelper.tar.gz)"
-        
-    # Étape 4: Configurer SSH
-    - name: Setup SSH
-      env:
-        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-        SERVER_IP: ${{ secrets.SERVER_IP }}
-        SERVER_USER: ${{ secrets.SERVER_USER }}
-      run: |
-        # Créer le dossier SSH
         mkdir -p ~/.ssh
+        ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
         
-        # Configurer la clé privée (ed25519 compatible)
-        echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
-        chmod 600 ~/.ssh/id_ed25519
-        
-        # Ajouter l'hôte aux known_hosts
-        ssh-keyscan -H $SERVER_IP >> ~/.ssh/known_hosts
-        
-        # Configurer SSH pour utiliser la clé ed25519
-        echo "Host $SERVER_IP" >> ~/.ssh/config
-        echo "  IdentityFile ~/.ssh/id_ed25519" >> ~/.ssh/config
-        echo "  IdentitiesOnly yes" >> ~/.ssh/config
-        chmod 600 ~/.ssh/config
-        
-        echo "🔑 SSH configuration completed"
-        
-    # Étape 5: Tester la connexion SSH
-    - name: Test SSH Connection
-      env:
-        SERVER_IP: ${{ secrets.SERVER_IP }}
-        SERVER_USER: ${{ secrets.SERVER_USER }}
+    - name: Deploy to server
       run: |
-        echo "🔌 Testing SSH connection..."
-        ssh -o ConnectTimeout=10 $SSH_USER@$SERVER_IP "echo '✅ SSH connection successful'"
-        
-    # Étape 6: Backup existant (si présent)
-    - name: Backup existing plugin
-      env:
-        SERVER_IP: ${{ secrets.SERVER_IP }}
-        SERVER_USER: ${{ secrets.SERVER_USER }}
-        DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
-      run: |
-        echo "💾 Creating backup of existing plugin..."
-        ssh $SERVER_USER@$SERVER_IP "
-          if [ -d '$DEPLOY_PATH/plugins/generic/premiumSubmissionHelper' ]; then
-            sudo cp -r '$DEPLOY_PATH/plugins/generic/premiumSubmissionHelper' '$DEPLOY_PATH/plugins/generic/premiumSubmissionHelper.backup.$(date +%Y%m%d_%H%M%S)'
-            echo '✅ Backup created successfully'
-          else
-            echo 'ℹ️  No existing plugin found, skipping backup'
-          fi
-        "
-        
-    # Étape 7: Déployer le plugin
-    - name: Deploy Plugin
-      env:
-        SERVER_IP: ${{ secrets.SERVER_IP }}
-        SSH_USER: ${{ secrets.SERVER_USER }}
-        DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
-      run: |
-        echo "🚀 Deploying plugin to server..."
-        
-        # Transférer l'archive
-        scp deployment/premiumSubmissionHelper.tar.gz $SERVER_USER@$SERVER_IP:/tmp/
-        
-        # Déployer sur le serveur
-        ssh $SSH_USER@$SERVER_IP "
-          cd /tmp
-          
-          # Supprimer l'ancien plugin
-          sudo rm -rf '$DEPLOY_PATH/plugins/generic/premiumSubmissionHelper'
-          
-          # Extraire le nouveau plugin
-          tar -xzf premiumSubmissionHelper.tar.gz
-          
-          # Déplacer vers le bon dossier
-          sudo mv premiumSubmissionHelper '$DEPLOY_PATH/plugins/generic/'
-          
-          # Définir les bonnes permissions
-          sudo chown -R www-data:www-data '$DEPLOY_PATH/plugins/generic/premiumSubmissionHelper'
-          sudo chmod -R 755 '$DEPLOY_PATH/plugins/generic/premiumSubmissionHelper'
-          
-          # Nettoyer les fichiers temporaires
-          rm -f premiumSubmissionHelper.tar.gz
-          
-          echo '✅ Plugin deployed successfully'
-        "
-        
-    # Étape 8: Vérifier le déploiement
-    - name: Verify Deployment
-      env:
-        SERVER_IP: ${{ secrets.SERVER_IP }}
-        SSH_USER: ${{ secrets.SERVER_USER }}
-        DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
-      run: |
-        echo "🔍 Verifying deployment..."
-        ssh $SERVER_USER@$SERVER_IP "
-          if [ -f '$DEPLOY_PATH/plugins/generic/premiumSubmissionHelper/PremiumSubmissionHelper.inc.php' ]; then
-            echo '✅ Plugin main file exists'
-            echo '📂 Plugin structure:'
-            ls -la '$DEPLOY_PATH/plugins/generic/premiumSubmissionHelper/'
-          else
-            echo '❌ Plugin deployment failed'
-            exit 1
-          fi
-        "
-        
-    # Étape 9: Notification de succès
-    - name: Deployment Success
-      run: |
-        echo "🎉 Deployment completed successfully!"
-        echo "📊 Deployment Summary:"
-        echo "  • Environment: ${{ github.event.inputs.environment }}"
-        echo "  • Branch: ${{ github.ref }}"
-        echo "  • Commit: ${{ github.sha }}"
-        echo "  • Deployed by: ${{ github.actor }}"
-        echo "  • Time: $(date)"
+        rsync -avz --delete --exclude='.git/' \
+          ./plugins/generic/premiumSubmissionHelper/ \
+          ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:/var/www/html/ojs/plugins/generic/premiumSubmissionHelper/
