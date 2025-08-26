@@ -1,4 +1,4 @@
-name: 🚀 Deploy Premium Plugin
+name: Deploy Premium Plugin
 
 on:
   workflow_dispatch:
@@ -7,31 +7,32 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: 🔑 Setup SSH
-      uses: webfactory/ssh-agent@v0.8.0
-      with:
-        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-    
-    - name: 🚀 Deploy via Tar
-      run: |
-        # Création de l'archive
-        tar -czf premium-plugin.tar.gz -C plugins/generic/premiumSubmissionHelper/ .
-        
-        # Upload
-        scp -o StrictHostKeyChecking=no \
-          premium-plugin.tar.gz \
-          ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/tmp/
-        
-        # Extraction et permissions
-        ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
-          sudo rm -rf /var/www/html/ojs/plugins/generic/premiumSubmissionHelper/
-          sudo mkdir -p /var/www/html/ojs/plugins/generic/premiumSubmissionHelper/
-          sudo tar -xzf /tmp/premium-plugin.tar.gz -C /var/www/html/ojs/plugins/generic/premiumSubmissionHelper/
-          sudo chown -R www-data:www-data /var/www/html/ojs/plugins/generic/premiumSubmissionHelper/
-          sudo find /var/www/html/ojs/plugins/generic/premiumSubmissionHelper/ -type f -exec chmod 644 {} \;
-          sudo find /var/www/html/ojs/plugins/generic/premiumSubmissionHelper/ -type d -exec chmod 755 {} \;
-          sudo rm /tmp/premium-plugin.tar.gz
-          echo '✅ Plugin deployed with correct permissions!'
-        "
+      - name: 🔑 Setup SSH
+        uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: 🚀 Deploy via Tar Archive
+        env:
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+          SERVER_HOST: ${{ secrets.SERVER_IP }}
+        run: |
+          echo "🚀 Deploying to $SERVER_USER@$SERVER_HOST..."
+
+          # Création de l'archive
+          tar -czf premium-plugin.tar.gz -C plugins/generic/premiumSubmissionHelper/ .
+
+          # Upload
+          scp -o StrictHostKeyChecking=no \
+            premium-plugin.tar.gz \
+            $SERVER_USER@$SERVER_IP:/tmp/
+
+          ssh -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_IP "
+            sudo rm -rf /var/www/html/ojs/plugins/generic/premiumSubmissionHelper/
+            sudo mkdir -p /var/www/html/ojs/plugins/generic/premiumSubmissionHelper/
+            sudo tar -xzf /tmp/premium-plugin.tar.gz -C /var/www/html/ojs/plugins/generic/premiumSubmissionHelper/
+            sudo chown -R www-data:www-data /var/www/html/ojs/plugins/generic/premiumSubmissionHelper/
+            sudo chmod -R 755 /var/www/html/ojs/plugins/generic/premiumSubmissionHelper/
+            sudo rm /tmp/premium-plugin.tar.gz
+            echo '✅ Plugin deployed successfully!'
+          "
