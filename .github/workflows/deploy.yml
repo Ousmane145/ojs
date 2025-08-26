@@ -12,27 +12,31 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      - name: 🚀 Deploy via Tar Archive
-        env:
-          SERVER_USER: ${{ secrets.SERVER_USER }}
-          SERVER_HOST: ${{ secrets.SERVER_IP }}
+      - name: 📁 Verify and deploy
         run: |
-          echo "🚀 Deploying to $SERVER_USER@$SERVER_HOST..."
+          echo "🔍 Checking repository structure..."
+      
+          if [ -d "plugins/generic/premiumSubmissionHelper" ]; then
+              echo "✅ Plugin found in standard location"
+              tar -czf plugin.tar.gz -C plugins/generic/premiumSubmissionHelper/ .
+          elif [ -d "premiumSubmissionHelper" ]; then
+               echo "⚠️ Plugin found in root, moving to standard location"
+               mkdir -p plugins/generic/
+               cp -r premiumSubmissionHelper plugins/generic/
+               tar -czf plugin.tar.gz -C plugins/generic/premiumSubmissionHelper/ .
+          else
+              echo "❌ Plugin not found anywhere!"
+              echo "Available directories:"
+              find . -type d -name "*premium*" -o -name "*helper*" -o -name "*plugin*"
+              exit 1
+          fi
 
-          # Création de l'archive
-          tar -czf premium-plugin.tar.gz -C plugins/generic/premiumSubmissionHelper/ .
-
-          # Upload
           scp -o StrictHostKeyChecking=no \
-            premium-plugin.tar.gz \
-            $SERVER_USER@$SERVER_IP:/tmp/
-
-          ssh -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_IP "
-            sudo rm -rf /var/www/html/ojs/plugins/generic/premiumSubmissionHelper/
-            sudo mkdir -p /var/www/html/ojs/plugins/generic/premiumSubmissionHelper/
-            sudo tar -xzf /tmp/premium-plugin.tar.gz -C /var/www/html/ojs/plugins/generic/premiumSubmissionHelper/
-            sudo chown -R www-data:www-data /var/www/html/ojs/plugins/generic/premiumSubmissionHelper/
-            sudo chmod -R 755 /var/www/html/ojs/plugins/generic/premiumSubmissionHelper/
-            sudo rm /tmp/premium-plugin.tar.gz
-            echo '✅ Plugin deployed successfully!'
-          "
+             plugin.tar.gz \
+             ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:/tmp/
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} "
+             sudo tar -xzf /tmp/plugin.tar.gz -C /var/www/html/ojs/plugins/generic/premiumSubmissionHelper/
+             sudo chown -R www-data:www-data /var/www/html/ojs/plugins/generic/premiumSubmissionHelper/
+           sudo rm /tmp/plugin.tar.gz
+           echo '✅ Plugin deployed!'
+        "
