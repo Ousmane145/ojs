@@ -65,19 +65,19 @@ class PremiumSubmissionHelper extends GenericPlugin
             // Add custom JavaScript
             $templateMgr->addJavaScript(
                 'santaneAnalysis',
-                $this->getPluginPath() . '/js/santaneAnalysis.js',
+                $this->getPluginPath() . '/js/premiumSubmissionHelper.js',
                 array('contexts' => 'backend')
             );
 
             // Add custom CSS
             $templateMgr->addStyleSheet(
                 'santaneAnalysis',
-                $this->getPluginPath() . '/css/santaneAnalysis.css',
+                $this->getPluginPath() . '/css/premiumSubmissionHelper.css',
                 array('contexts' => 'backend')
             );
 
             // Add the button and results container
-            $templateMgr->assign('showSantaneAnalysis', true);
+            $templateMgr->assign('showPremiumSubmissionHelper', true);
         }
 
         return false;

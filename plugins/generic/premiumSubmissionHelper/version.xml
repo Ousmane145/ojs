@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE version SYSTEM "../../../lib/pkp/dtd/pluginVersion.dtd">
+<version>
+    <application>ojs</application>
+    <type>plugins.generic</type>
+    <class>PremiumSubmissionHelper</class>
+    <version>1.0.0</version>
+    <requires>
+        <ojs>3.2</ojs>
+        <php>7.0</php>
+    </requires>
+    <date>2023-10-15</date>
+    <summary>Santane AI Analysis Plugin</summary>
+    <description>This plugin provides AI-powered analysis of article abstracts for premium users.</description>
+    <help>premiumSubmissionHelper#readme</help>
+    <license>GPLv3</license>
+    <release>
+        <version>1.0.0</version>
+        <date>2023-10-15</date>
+        <description>Initial release</description>
+    </release>
+</version>
