@@ -34,12 +34,12 @@ jobs:
     - name: Run PHPCS with error handling
       run: |
         # Exécute phpcs mais ne fait pas échouer le job immédiatement
-        phpcs --standard=PSR12 --extensions=php plugins/generic/santaneAnalysisPlugin/ || true
+        phpcs --standard=PSR12 --extensions=php plugins/generic/SantaneAnalysisPlugin/ || true
         
     - name: Run PHPCS properly
       run: |
         # Cette étape va échouer normalement si il y a des erreurs
-        phpcs --standard=PSR12 --extensions=php --report=full plugins/generic/santaneAnalysisPlugin/
+        phpcs --standard=PSR12 --extensions=php --report=full plugins/generic/SantaneAnalysisPlugin/
 
   security-scan:
     name: Analyse de Sécurité

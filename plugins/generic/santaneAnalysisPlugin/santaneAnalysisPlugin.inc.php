@@ -10,13 +10,13 @@
  * @brief Main class for Santane Analysis plugin.
  */
 
-namespace APP\plugins\generic\santaneAnalysisPlugin;
+namespace APP\plugins\generic\SantaneAnalysisPlugin;
 
 use PKP\Application;
 use PKP\plugins\HookRegistry;
 use PKP\plugins\GenericPlugin;
 
-class santaneAnalysisPlugin extends GenericPlugin
+class SantaneAnalysisPlugin extends GenericPlugin
 {
     /**
      * @copydoc Plugin::register()
