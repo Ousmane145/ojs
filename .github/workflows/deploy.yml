@@ -1,31 +1,32 @@
-# .github/workflows/deploy.yml
-name: Deploy to Production
+name: 🚀 Deploy Premium Plugin
 
 on:
-  workflow_dispatch:  # Permet de déclencher manuellement
+  workflow_dispatch:
 
 jobs:
   deploy:
-    name: Deploy
     runs-on: ubuntu-latest
-    
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     
-    - name: Install SSH key
-      uses: webfactory/ssh-agent@v0.7.0
-      with:
-        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-        
-    - name: Add known hosts
+    - name: 🚀 Deploy via Tar
       run: |
-        mkdir -p ~/.ssh
-        ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
+        # Création de l'archive
+        tar -czf premium-plugin.tar.gz -C plugins/generic/premiumSubmissionHelper/ .
         
-    - name: 🚀 Deploy with SCP (correct way)
-      run: |
-        echo "🚀 Deploying entire folder with SCP..."
-        scp -r -o StrictHostKeyChecking=no \
-          ./plugins/generic/premiumSubmissionHelper \
-          ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:/var/www/html/ojs/plugins/generic/
-        echo "✅ Entire folder deployed successfully!
+        # Upload
+        scp -o StrictHostKeyChecking=no \
+          premium-plugin.tar.gz \
+          ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:/tmp/
+        
+        # Extraction et permissions
+        ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} "
+          sudo rm -rf /var/www/html/ojs/plugins/generic/premiumSubmissionHelper/
+          sudo mkdir -p /var/www/html/ojs/plugins/generic/premiumSubmissionHelper/
+          sudo tar -xzf /tmp/premium-plugin.tar.gz -C /var/www/html/ojs/plugins/generic/premiumSubmissionHelper/
+          sudo chown -R www-data:www-data /var/www/html/ojs/plugins/generic/premiumSubmissionHelper/
+          sudo find /var/www/html/ojs/plugins/generic/premiumSubmissionHelper/ -type f -exec chmod 644 {} \;
+          sudo find /var/www/html/ojs/plugins/generic/premiumSubmissionHelper/ -type d -exec chmod 755 {} \;
+          sudo rm /tmp/premium-plugin.tar.gz
+          echo '✅ Plugin deployed with correct permissions!'
+        "
