@@ -22,17 +22,10 @@ jobs:
         mkdir -p ~/.ssh
         ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
         
-    - name: 🚀 Deploy with SCP
+    - name: 🚀 Deploy with SCP (correct way)
       run: |
-        echo "🚀 Deploying with SCP to ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}"
-
-        scp -o StrictHostKeyChecking=no \
-          ./plugins/generic/premiumSubmissionHelper/* \
-          ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:/var/www/html/ojs/plugins/generic/premiumSubmissionHelper/
-
+        echo "🚀 Deploying entire folder with SCP..."
         scp -r -o StrictHostKeyChecking=no \
-          ./plugins/generic/premiumSubmissionHelper/css/ \
-          ./plugins/generic/premiumSubmissionHelper/js/ \
-          ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:/var/www/html/ojs/plugins/generic/premiumSubmissionHelper/
-
-        echo "✅ Deployment completed successfully."
+          ./plugins/generic/premiumSubmissionHelper \
+          ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:/var/www/html/ojs/plugins/generic/
+        echo "✅ Entire folder deployed successfully!
