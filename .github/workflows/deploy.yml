@@ -9,6 +9,11 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
+    - name: 🔑 Setup SSH
+      uses: webfactory/ssh-agent@v0.8.0
+      with:
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+    
     - name: 🚀 Deploy via Tar
       run: |
         # Création de l'archive
@@ -17,10 +22,10 @@ jobs:
         # Upload
         scp -o StrictHostKeyChecking=no \
           premium-plugin.tar.gz \
-          ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:/tmp/
+          ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/tmp/
         
         # Extraction et permissions
-        ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} "
+        ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
           sudo rm -rf /var/www/html/ojs/plugins/generic/premiumSubmissionHelper/
           sudo mkdir -p /var/www/html/ojs/plugins/generic/premiumSubmissionHelper/
           sudo tar -xzf /tmp/premium-plugin.tar.gz -C /var/www/html/ojs/plugins/generic/premiumSubmissionHelper/
