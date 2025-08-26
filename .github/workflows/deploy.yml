@@ -23,21 +23,23 @@ jobs:
         ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
         
     - name: 🚀 Deploy Plugin
+      env:
+        SERVER_USER: ${{ secrets.SERVER_USER }}
+        SERVER_IP: ${{ secrets.SERVER_IP }}
       run: |
+        echo "Deploying plugin files to $SERVER_USER@$SERVER_IP..."
+        
 
-        echo "Deploying plugin files..."
-  
         scp -o StrictHostKeyChecking=no \
-        ./plugins/generic/premiumSubmissionHelper/*.inc.php \
-        ./plugins/generic/premiumSubmissionHelper/*.php \
-        ./plugins/generic/premiumSubmissionHelper/*.xml \
-        ./plugins/generic/premiumSubmissionHelper/*.txt \
-        ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/var/www/html/ojs/plugins/generic/premiumSubmissionHelper/
-    
-    
+         ./plugins/generic/premiumSubmissionHelper/*.inc.php \
+         ./plugins/generic/premiumSubmissionHelper/*.php \
+         ./plugins/generic/premiumSubmissionHelper/*.xml \
+         ./plugins/generic/premiumSubmissionHelper/*.txt \
+         $SERVER_USER@$SERVER_IP:/var/www/html/ojs/plugins/generic/premiumSubmissionHelper/
+      
         scp -r -o StrictHostKeyChecking=no \
-        ./plugins/generic/premiumSubmissionHelper/js/ \
-        ./plugins/generic/premiumSubmissionHelper/css/ \
-        ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/var/www/html/ojs/plugins/generic/premiumSubmissionHelper/
-    
+         ./plugins/generic/premiumSubmissionHelper/js/ \
+         ./plugins/generic/premiumSubmissionHelper/css/ \
+         $SERVER_USER@$SERVER_IP:/var/www/html/ojs/plugins/generic/premiumSubmissionHelper/
+      
         echo "✅ All files deployed successfully!"
