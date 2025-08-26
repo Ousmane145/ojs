@@ -34,12 +34,12 @@ jobs:
     - name: Linter le code PHP du plugin
       run: |
         echo "🔍 Analyse du code PHP avec PSR-12..."
-        phpcs --standard=PSR12 --extensions=php --ignore=*/vendor/* --ignore=*/lib/* plugins/generic/santaneAnalysisPlugin/
+        phpcs --standard=PSR12 --extensions=php --ignore=*/vendor/* --ignore=*/lib/* plugins/generic/premiumSubmissionHelper/
         
     - name: Vérifier la syntaxe PHP
       run: |
         echo "✅ Validation de la syntaxe PHP..."
-        find plugins/generic/santaneAnalysisPlugin/ -name "*.php" -exec php -l {} \;
+        find plugins/generic/premiumSubmissionHelper/ -name "*.php" -exec php -l {} \;
 
   security-scan:
     name: Analyse de Sécurité
@@ -55,7 +55,7 @@ jobs:
         if ! command -v jshint &> /dev/null; then
           npm install -g jshint
         fi
-        jshint plugins/generic/santaneAnalysisPlugin/js/ --config='{"esversion": 6}' || true
+        jshint plugins/generic/premiumSubmissionHelper/js/ --config='{"esversion": 6}' || true
 
     - name: Valider la syntaxe CSS
       run: |
@@ -63,12 +63,12 @@ jobs:
         if ! command -v csslint &> /dev/null; then
           npm install -g csslint
         fi
-        csslint plugins/generic/santaneAnalysisPlugin/css/ || true
+        csslint plugins/generic/premiumSubmissionHelper/css/ || true
 
     - name: Valider les fichiers de configuration
       run: |
         echo "📋 Validation XML..."
-        find plugins/generic/santaneAnalysisPlugin/ -name "*.xml" -exec echo "Validation de {}" \; -exec xmllint --noout {} \; || true
+        find plugins/generic/premiumSubmissionHelper/ -name "*.xml" -exec echo "Validation de {}" \; -exec xmllint --noout {} \; || true
         
         echo "📋 Validation JSON..."
-        find plugins/generic/santaneAnalysisPlugin/ -name "*.json" -exec echo "Validation de {}" \; -exec jq . {} > /dev/null \; || true
+        find plugins/generic/premiumSubmissionHelper/ -name "*.json" -exec echo "Validation de {}" \; -exec jq . {} > /dev/null \; || true

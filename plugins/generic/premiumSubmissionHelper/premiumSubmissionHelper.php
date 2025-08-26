@@ -1,22 +1,22 @@
 <?php
 
 /**
- * @file SantaneAnalysisPlugin.inc.php
+ * @file PremiumSubmissionHelper.inc.php
  *
  * Copyright (c) 2023 Santane Analysis
  * Distributed under the GNU GPL v3. For full terms see the file LICENSE.
  *
- * @class SantaneAnalysisPlugin
+ * @class PremiumSubmissionHelper
  * @brief Main class for Santane Analysis plugin.
  */
 
-namespace APP\plugins\generic\SantaneAnalysisPlugin;
+namespace APP\plugins\generic\PremiumSubmissionHelper;
 
 use PKP\Application;
 use PKP\plugins\HookRegistry;
 use PKP\plugins\GenericPlugin;
 
-class SantaneAnalysisPlugin extends GenericPlugin
+class PremiumSubmissionHelper extends GenericPlugin
 {
     /**
      * @copydoc Plugin::register()

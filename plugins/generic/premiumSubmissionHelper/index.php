@@ -9,5 +9,5 @@
  * @brief Wrapper for Santane Analysis plugin.
  */
 
-require_once('SantaneAnalysisPlugin.inc.php');
-return new santaneAnalysisPlugin();
+require_once('premiumSubmissionHelper.inc.php');
+return new premiumSubmissionHelper();

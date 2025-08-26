@@ -55,7 +55,7 @@ jobs:
     - name: Créer une archive du plugin
       run: |
         echo "📦 Création de l'archive..."
-        cd plugins/generic/santaneAnalysisPlugin/
+        cd plugins/generic/premiumSubmissionHelper/
         tar -czf santane-analysis-plugin.tar.gz ./*
         ls -la santane-analysis-plugin.tar.gz
 
@@ -67,7 +67,7 @@ jobs:
         echo "🚀 Déploiement en cours..."
         
         # Copier l'archive
-        scp plugins/generic/santaneAnalysisPlugin/santane-analysis-plugin.tar.gz \
+        scp plugins/generic/premiumSubmissionHelper/santane-analysis-plugin.tar.gz \
           $SERVER_USER@$SERVER_IP:/tmp/
         
         # Commande de déploiement distant
@@ -76,7 +76,7 @@ jobs:
           echo "📁 Déploiement sur le serveur..."
           
           OJS_DIR="/var/www/html/ojs"
-          PLUGIN_DIR="$OJS_DIR/plugins/generic/santaneAnalysisPlugin"
+          PLUGIN_DIR="$OJS_DIR/plugins/generic/premiumSubmissionHelper"
           BACKUP_DIR="/tmp/plugin-backups"
           TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 
@@ -113,7 +113,7 @@ jobs:
       run: |
         echo "🔍 Vérification du déploiement..."
         ssh $SERVER_USER@$SERVER_IP "
-          PLUGIN_DIR=\"/var/www/html/ojs/plugins/generic/santaneAnalysisPlugin\"
+          PLUGIN_DIR=\"/var/www/html/ojs/plugins/generic/premiumSubmissionHelper\"
           if [ -d \"\$PLUGIN_DIR\" ]; then
             echo '✅ Plugin déployé avec succès'
             echo '📁 Structure:'
