@@ -22,8 +22,17 @@ jobs:
         mkdir -p ~/.ssh
         ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
         
-    - name: Deploy to server
+    - name: 🚀 Deploy with SCP
       run: |
-        rsync -avz --delete --exclude='.git/' \
-          ./plugins/generic/premiumSubmissionHelper/ \
+        echo "🚀 Deploying with SCP to ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}"
+
+        scp -o StrictHostKeyChecking=no \
+          ./plugins/generic/premiumSubmissionHelper/* \
           ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:/var/www/html/ojs/plugins/generic/premiumSubmissionHelper/
+
+        scp -r -o StrictHostKeyChecking=no \
+          ./plugins/generic/premiumSubmissionHelper/css/ \
+          ./plugins/generic/premiumSubmissionHelper/js/ \
+          ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:/var/www/html/ojs/plugins/generic/premiumSubmissionHelper/
+
+        echo "✅ Deployment completed successfully."
