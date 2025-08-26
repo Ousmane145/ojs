@@ -22,8 +22,27 @@ jobs:
         mkdir -p ~/.ssh
         ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
         
-    - name: Deploy to server
-      run: |
-        rsync -avz --delete --exclude='.git/' \
-          ./plugins/generic/premiumSubmissionHelper/ \
-          ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:/var/www/html/ojs/plugins/generic/premiumSubmissionHelper/
+    - - name: Deploy with Rsync
+    env:
+      SERVER_IP: ${{ secrets.SERVER_IP }}
+      SERVER_USER: ${{ secrets.SERVER_USER }}
+      DEPLOY_PATH: /var/www/html/ojs/plugins/generic/premiumSubmissionHelper
+    run: |
+      echo "🚀 Starting deployment to $SERVER_IP:$DEPLOY_PATH"
+    
+      rsync -avz \
+      --no-times \
+      --omit-dir-times \
+      --delete \
+      --exclude='.git/' \
+      --exclude='node_modules/' \
+      --exclude='.env' \
+      --exclude='*.log' \
+      -e "ssh -o StrictHostKeyChecking=no" \
+      ./ \
+      $SERVER_USER@$SERVER_IP:$DEPLOY_PATH/
+    
+      echo "📋 Verifying deployment..."
+      ssh $SERVER_USER@$SERVER_IP "ls -la $DEPLOY_PATH/ && echo '✅ Deployment verified!'"
+    
+      echo "🎉 Deployment completed successfully!"
