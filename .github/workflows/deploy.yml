@@ -22,24 +22,8 @@ jobs:
         mkdir -p ~/.ssh
         ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
         
-    - name: 🚀 Deploy Plugin
-      env:
-        SERVER_USER: ${{ secrets.SERVER_USER }}
-        SERVER_IP: ${{ secrets.SERVER_IP }}
+    - name: Deploy to server
       run: |
-        echo "Deploying plugin files to $SERVER_USER@$SERVER_IP..."
-        
-
-        scp -o StrictHostKeyChecking=no \
-         ./plugins/generic/premiumSubmissionHelper/*.inc.php \
-         ./plugins/generic/premiumSubmissionHelper/*.php \
-         ./plugins/generic/premiumSubmissionHelper/*.xml \
-         ./plugins/generic/premiumSubmissionHelper/*.txt \
-         $SERVER_USER@$SERVER_IP:/var/www/html/ojs/plugins/generic/premiumSubmissionHelper/
-      
-        scp -r -o StrictHostKeyChecking=no \
-         ./plugins/generic/premiumSubmissionHelper/js/ \
-         ./plugins/generic/premiumSubmissionHelper/css/ \
-         $SERVER_USER@$SERVER_IP:/var/www/html/ojs/plugins/generic/premiumSubmissionHelper/
-      
-        echo "✅ All files deployed successfully!"
+        rsync -avz --delete --exclude='.git/' \
+          ./plugins/generic/premiumSubmissionHelper/ \
+          ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:/var/www/html/ojs/plugins/generic/premiumSubmissionHelper/
