@@ -30,7 +30,6 @@ jobs:
         composer global require squizlabs/php_codesniffer
         phpcs --config-set default_standard PSR12
         phpcs --config-set show_progress 1
-
     - name: Linter le code PHP du plugin
       run: |
         echo "🔍 Analyse du code PHP avec PSR-12..."
@@ -40,7 +39,6 @@ jobs:
       run: |
         echo "✅ Validation de la syntaxe PHP..."
         find plugins/generic/santaneAnalysisPlugin/ -name "*.php" -exec php -l {} \;
-
   security-scan:
     name: Analyse de Sécurité
     runs-on: ubuntu-latest
@@ -49,6 +47,11 @@ jobs:
     - name: Checkout du code
       uses: actions/checkout@v4
 
+    - name: Scan de sécurité avec Psalm
+      uses: docker://vimeo/psalm-github-actions
+      with:
+        args: --init plugins/generic/santaneAnalysisPlugin/
+
     - name: Valider la syntaxe JavaScript
       run: |
         echo "📋 Validation JavaScript..."
@@ -56,7 +59,6 @@ jobs:
           npm install -g jshint
         fi
         jshint plugins/generic/santaneAnalysisPlugin/js/ --config='{"esversion": 6}' || true
-
     - name: Valider la syntaxe CSS
       run: |
         echo "🎨 Validation CSS..."
@@ -64,7 +66,6 @@ jobs:
           npm install -g csslint
         fi
         csslint plugins/generic/santaneAnalysisPlugin/css/ || true
-
     - name: Valider les fichiers de configuration
       run: |
         echo "📋 Validation XML..."
