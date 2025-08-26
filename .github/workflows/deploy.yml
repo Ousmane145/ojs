@@ -1,28 +1,136 @@
-name: Deploy to Production
+name: CD - Déploiement vers Serveur OJS
 
 on:
-  workflow_dispatch:  # Permet de déclencher manuellement
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environnement de déploiement'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+        - staging
+        - production
+      ojs-version:
+        description: 'Version OJS cible'
+        required: true
+        default: '3.4'
+        type: choice
+        options:
+        - '3.5'
+        - '3.4
 
 jobs:
   deploy:
-    name: Deploy
+    name: Déployer sur Serveur OJS
     runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }}
     
     steps:
-    - uses: actions/checkout@v3
-    
-    - name: Install SSH key
-      uses: webfactory/ssh-agent@v0.7.0
+    - name: Checkout du code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Setup SSH
+      uses: webfactory/ssh-agent@v0.8.0
       with:
         ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-        
-    - name: Add known hosts
+
+    - name: Ajouter le serveur à known_hosts
       run: |
         mkdir -p ~/.ssh
         ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
-        
-    - name: Deploy to server
+
+    - name: Valider la connexion SSH
       run: |
-        rsync -avz --delete --exclude='.git/' \
-          ./plugins/generic/santaneAnalysisPlugin/ \
-          ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:/var/www/html/ojs/plugins/generic/santaneAnalysisPlugin/
+        echo "🔗 Test de connexion au serveur..."
+        ssh -o BatchMode=yes ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} "echo 'Connexion SSH réussie!'"
+
+    - name: Créer une archive du plugin
+      run: |
+        echo "📦 Création de l'archive..."
+        cd plugins/generic/santaneAnalysisPlugin/
+        tar -czf santane-analysis-plugin.tar.gz ./*
+        ls -la santane-analysis-plugin.tar.gz
+
+    - name: Déployer sur le serveur OJS
+      run: |
+        echo "🚀 Déploiement en cours..."
+        
+        # Copier l'archive
+        scp plugins/generic/santaneAnalysisPlugin/santane-analysis-plugin.tar.gz \
+          ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:/tmp/
+        
+        # Commande de déploiement distant
+        ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
+          set -e
+          echo "📁 Déploiement sur le serveur..."
+          
+          # Variables
+          OJS_DIR="/var/www/html/ojs"  
+          PLUGIN_DIR="$OJS_DIR/plugins/generic/santaneAnalysisPlugin"
+          BACKUP_DIR="/tmp/plugin-backups"
+          TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+          
+          # Créer le dossier de backup
+          mkdir -p $BACKUP_DIR
+          
+          # Sauvegarder l'ancienne version si elle existe
+          if [ -d "$PLUGIN_DIR" ]; then
+            echo "💾 Sauvegarde de l'ancienne version..."
+            tar -czf "$BACKUP_DIR/santane-analysis-backup-$TIMESTAMP.tar.gz" -C $PLUGIN_DIR .
+          fi
+          
+          # Préparer le dossier de destination
+          sudo mkdir -p $PLUGIN_DIR
+          sudo chown $USER:www-data $PLUGIN_DIR
+          sudo chmod 755 $PLUGIN_DIR
+          
+          # Extraire la nouvelle version
+          echo "📂 Extraction de la nouvelle version..."
+          tar -xzf /tmp/santane-analysis-plugin.tar.gz -C $PLUGIN_DIR
+          
+          # Définir les permissions
+          sudo chown -R $USER:www-data $PLUGIN_DIR
+          sudo find $PLUGIN_DIR -type d -exec chmod 755 {} \;
+          sudo find $PLUGIN_DIR -type f -exec chmod 644 {} \;
+          
+          # Nettoyer
+          rm /tmp/santane-analysis-plugin.tar.gz
+          
+          echo "✅ Déploiement terminé avec succès!"
+          echo "📋 Résumé:"
+          echo "   - Backup: $BACKUP_DIR/santane-analysis-backup-$TIMESTAMP.tar.gz"
+          echo "   - Nouvelle version déployée dans: $PLUGIN_DIR"
+          echo "   - Nombre de fichiers: $(find $PLUGIN_DIR -type f | wc -l)"
+        EOF
+
+    - name: Vérifier le déploiement
+      run: |
+        echo "🔍 Vérification du déploiement..."
+        ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} "
+          PLUGIN_DIR=\"/var/www/ojs/plugins/generic/santaneAnalysisPlugin\"
+          if [ -d \"\$PLUGIN_DIR\" ]; then
+            echo '✅ Plugin déployé avec succès'
+            echo '📁 Structure:'
+            find \$PLUGIN_DIR -name '*.php' -o -name '*.js' -o -name '*.css' -o -name '*.xml' | head -10
+            echo '📊 Taille:'
+            du -sh \$PLUGIN_DIR
+          else
+            echo '❌ Erreur: Plugin non trouvé'
+            exit 1
+          fi
+        "
+
+    - name: Notifier le succès
+      if: success()
+      run: |
+        echo "🎉 Déploiement réussi vers ${{ github.event.inputs.environment }}!"
+        echo "Version: ${{ github.event.inputs.version || 'latest' }}"
+
+    - name: Notifier l'échec
+      if: failure()
+      run: |
+        echo "❌ Échec du déploiement!"
+        exit 1
