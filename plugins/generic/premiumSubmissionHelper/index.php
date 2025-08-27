@@ -10,4 +10,4 @@
  */
 
 require_once('premiumSubmissionHelper.inc.php');
-return new premiumSubmissionHelper();
+return new PremiumSubmissionHelper();
